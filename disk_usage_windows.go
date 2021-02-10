@@ -8,14 +8,16 @@ package vfs
 
 import (
 	"golang.org/x/sys/windows"
+
+	"github.com/cockroachdb/errors"
 )
 
 func (defaultFS) GetFreeSpace(path string) (uint64, error) {
 	var freeSpace uint64
 	p, err := windows.UTF16PtrFromString(path)
 	if err != nil {
-		return 0, err
+		return 0, errors.WithStack(err)
 	}
 	err = windows.GetDiskFreeSpaceEx(p, &freeSpace, nil, nil)
-	return freeSpace, err
+	return freeSpace, errors.WithStack(err)
 }

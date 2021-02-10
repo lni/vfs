@@ -8,12 +8,14 @@ package vfs
 
 import (
 	"golang.org/x/sys/unix"
+
+	"github.com/cockroachdb/errors"
 )
 
 func (defaultFS) GetFreeSpace(path string) (uint64, error) {
 	stat := unix.Statfs_t{}
 	if err := unix.Statfs(path, &stat); err != nil {
-		return 0, err
+		return 0, errors.WithStack(err)
 	}
 	return uint64(stat.Bsize) * stat.Bfree, nil
 }
