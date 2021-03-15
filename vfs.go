@@ -20,6 +20,7 @@ import (
 // Typically, it will be an *os.File, but test code may choose to substitute
 // memory-backed implementations.
 type File interface {
+	io.Seeker
 	io.Closer
 	io.Reader
 	io.ReaderAt

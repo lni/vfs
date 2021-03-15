@@ -646,6 +646,25 @@ func (f *memFile) Close() error {
 	return nil
 }
 
+func (f *memFile) Seek(offset int64, whence int) (int64, error) {
+	if f.n.isDir {
+		return 0, errors.New("pebble/vfs: cannot seek on a directory")
+	}
+	if whence == io.SeekCurrent && offset == 0 {
+		return int64(f.rpos), nil
+	}
+	if whence != io.SeekStart {
+		panic("not implemented")
+	}
+	f.n.mu.Lock()
+	defer f.n.mu.Unlock()
+	if offset >= int64(len(f.n.mu.data)) {
+		return 0, io.EOF
+	}
+	f.rpos += int(offset)
+	return offset, nil
+}
+
 func (f *memFile) Read(p []byte) (int, error) {
 	if !f.read {
 		return 0, errors.New("pebble/vfs: file was not opened for reading")

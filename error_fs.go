@@ -282,6 +282,10 @@ func (f *errorFile) Close() error {
 	return f.file.Close()
 }
 
+func (f *errorFile) Seek(offset int64, whence int) (int64, error) {
+	return f.file.Seek(offset, whence)
+}
+
 func (f *errorFile) Read(p []byte) (int, error) {
 	if err := f.inj.MaybeError(OpRead); err != nil {
 		return 0, err
