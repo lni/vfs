@@ -87,9 +87,9 @@ type MemFS struct {
 
 var _ FS = &MemFS{}
 
-// GetFreeSpace implements FS.GetFreeSpace.
-func (*MemFS) GetFreeSpace(string) (uint64, error) {
-	return 0, errors.New("vfs: not supported")
+// GetDiskUsage implements FS.GetDiskUsage.
+func (*MemFS) GetDiskUsage(string) (DiskUsage, error) {
+	return DiskUsage{}, errors.New("vfs: not supported")
 }
 
 // String dumps the contents of the MemFS.

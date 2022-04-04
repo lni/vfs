@@ -259,12 +259,12 @@ func (fs *ErrorFS) Stat(name string) (os.FileInfo, error) {
 	return fs.fs.Stat(name)
 }
 
-// GetFreeSpace implements FS.GetFreeSpace.
-func (fs *ErrorFS) GetFreeSpace(path string) (uint64, error) {
+// GetDiskUsage implements FS.GetDiskUsage.
+func (fs *ErrorFS) GetDiskUsage(path string) (DiskUsage, error) {
 	if err := fs.inj.MaybeError(OpRead); err != nil {
-		return 0, err
+		return DiskUsage{}, err
 	}
-	return fs.fs.GetFreeSpace(path)
+	return fs.fs.GetDiskUsage(path)
 }
 
 var _ File = &errorFile{}
