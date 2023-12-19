@@ -167,3 +167,26 @@ func (f *syncingFile) Close() error {
 	}
 	return f.File.Close()
 }
+
+func (f *syncingFile) Preallocate(offset, length int64) error {
+	return nil
+}
+
+func (f *syncingFile) SyncTo(length int64) (fullSync bool, err error) {
+	return true, f.Sync()
+}
+
+func (f *syncingFile) SyncData() error {
+	return f.Sync()
+}
+
+func (f *syncingFile) Prefetch(offset int64, length int64) error {
+	return nil
+}
+
+func (f *syncingFile) Fd() uintptr {
+	if f.fd != 0 {
+		return f.fd
+	}
+	return InvalidFd
+}

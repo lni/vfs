@@ -763,3 +763,23 @@ func (f *memFile) Sync() error {
 	}
 	return nil
 }
+
+func (f *memFile) Preallocate(offset, length int64) error {
+	return nil
+}
+
+func (f *memFile) SyncTo(length int64) (fullSync bool, err error) {
+	return true, f.Sync()
+}
+
+func (f *memFile) SyncData() error {
+	return f.Sync()
+}
+
+func (f *memFile) Prefetch(offset int64, length int64) error {
+	return nil
+}
+
+func (f *memFile) Fd() uintptr {
+	return InvalidFd
+}
