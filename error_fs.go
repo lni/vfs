@@ -327,3 +327,29 @@ func (f *errorFile) Sync() error {
 	}
 	return f.file.Sync()
 }
+
+func (f *errorFile) Preallocate(offset, length int64) error {
+	return nil
+}
+
+func (f *errorFile) SyncTo(length int64) (fullSync bool, err error) {
+	return true, f.Sync()
+}
+
+func (f *errorFile) SyncData() error {
+	return f.Sync()
+}
+
+func (f *errorFile) Prefetch(offset int64, length int64) error {
+	return nil
+}
+
+func (f *errorFile) Fd() uintptr {
+	type fd interface {
+		Fd() uintptr
+	}
+	if d, ok := f.file.(fd); ok {
+		return d.Fd()
+	}
+	return InvalidFd
+}

@@ -28,6 +28,11 @@ type File interface {
 	io.WriterAt
 	Stat() (os.FileInfo, error)
 	Sync() error
+	Preallocate(offset, length int64) error
+	SyncTo(length int64) (fullSync bool, err error)
+	SyncData() error
+	Prefetch(offset int64, length int64) error
+	Fd() uintptr
 }
 
 // OpenOption provide an interface to do work on file handles in the Open()
@@ -137,6 +142,32 @@ type DiskUsage struct {
 	UsedBytes uint64
 }
 
+const InvalidFd uintptr = ^(uintptr(0))
+
+type fileCompat struct {
+	*os.File
+}
+
+func (f *fileCompat) Preallocate(offset, length int64) error {
+	return nil
+}
+
+func (f *fileCompat) SyncTo(length int64) (fullSync bool, err error) {
+	return true, f.Sync()
+}
+
+func (f *fileCompat) SyncData() error {
+	return f.Sync()
+}
+
+func (f *fileCompat) Prefetch(offset int64, length int64) error {
+	return nil
+}
+
+func (f *fileCompat) Fd() uintptr {
+	return f.File.Fd()
+}
+
 // Default is a FS implementation backed by the underlying operating system's
 // file system.
 var Default FS = defaultFS{}
@@ -145,7 +176,7 @@ type defaultFS struct{}
 
 func (defaultFS) Create(name string) (File, error) {
 	f, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_TRUNC|syscall.O_CLOEXEC, 0666)
-	return f, errors.WithStack(err)
+	return &fileCompat{f}, errors.WithStack(err)
 }
 
 func (defaultFS) Link(oldname, newname string) error {
@@ -154,18 +185,19 @@ func (defaultFS) Link(oldname, newname string) error {
 
 func (defaultFS) Open(name string, opts ...OpenOption) (File, error) {
 	file, err := os.OpenFile(name, os.O_RDONLY|syscall.O_CLOEXEC, 0)
+	f := &fileCompat{file}
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	for _, opt := range opts {
-		opt.Apply(file)
+		opt.Apply(f)
 	}
-	return file, nil
+	return f, nil
 }
 
 func (defaultFS) OpenForAppend(name string) (File, error) {
 	f, err := os.OpenFile(name, os.O_RDWR|os.O_APPEND|syscall.O_CLOEXEC, 0)
-	return f, errors.WithStack(err)
+	return &fileCompat{f}, errors.WithStack(err)
 }
 
 func (defaultFS) Remove(name string) error {
@@ -185,7 +217,7 @@ func (fs defaultFS) ReuseForWrite(oldname, newname string) (File, error) {
 		return nil, errors.WithStack(err)
 	}
 	f, err := os.OpenFile(newname, os.O_RDWR|os.O_CREATE|syscall.O_CLOEXEC, 0666)
-	return f, errors.WithStack(err)
+	return &fileCompat{f}, errors.WithStack(err)
 }
 
 func (defaultFS) MkdirAll(dir string, perm os.FileMode) error {
